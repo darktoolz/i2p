@@ -1,9 +1,11 @@
 # i2p env-configurable docker
-`i2pd` on Alpine with auto config using env vars.
+Docker `i2pd` daemon on Alpine Linux with auto config using env vars
 
-Allows to specify i2p tunnels (client/server) providing key in env (or generating it automatically).
+Allows to specify i2p tunnels (client/server) providing key in env (or generating it automatically)
 
-# env
+Available on `hub.docker.com` as: `darktool/i2p`
+
+## env
 - `CLIENT`: client tunnels definition, default undefined
   - `80:nginx:8080:KEY`
   - `80:nginx:8080`: new key created
@@ -20,7 +22,7 @@ Allows to specify i2p tunnels (client/server) providing key in env (or generatin
 - `CONNECTIONS`: connections count, default 12
 - `LOGLEVEL`: default `error`
 
-# tunnel type
+## tunnel type
 - `client`: for accessing remote as local docker via i2p
 - `server`: to provide server tcp tunnel via i2p (similar to Tor Hidden Service)
 - `http`: `server` + Host: HTTP header
@@ -28,19 +30,19 @@ Allows to specify i2p tunnels (client/server) providing key in env (or generatin
 - `udpclient` + `udpserver`
 - `irc`
 
-# exposes
+## exposes
 - `4444/tcp`: http server
 - `4447/tcp`: socks server
 - `7070/tcp`: http control connection
 
-# key management tools
+## key management tools
 These tools are available in docker
 - `keygen`: generate and output key
-  - usage: `docker run --rm $(image) keygen`: make key and write to stdout, default key type 7 == `ED25519-SHA512` (`EDDSA-SHA512-ED25519`)
+  - usage: `docker run --rm darktool/i2p keygen`: make key and write to stdout, default key type 7 == `ED25519-SHA512` (`EDDSA-SHA512-ED25519`)
 - `keyinfo`: output key info
-  - usage: `echo $KEY | docker run --rm $(image) keyinfo`: key info for base64-encoded i2p key
+  - usage: `echo $KEY | docker run --rm darktool/i2p keyinfo`: key info for base64-encoded i2p key
 
-# key types
+## key types
 - `DSA-SHA1`: 0
 - `ECDSA-SHA256-P256`: 1
 - `ECDSA-SHA384-P384`: 2
@@ -53,14 +55,3 @@ These tools are available in docker
 - `GOSTR3410_TC26_A_512-GOSTR3411-512`: 10
 - `RED25519-SHA512`: 11
 - default: `ED25519-SHA512`
-
-# recommended, but works anyway
-- `ntpdate pool.ntp.org`: hourly
-- `ulimit`: 4096
-```yaml
-    ulimits:
-      nproc: 65535
-      nofile:
-        soft: 20000
-        hard: 40000
-```
