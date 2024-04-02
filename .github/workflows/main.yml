@@ -3,8 +3,9 @@ name: main
 on:
   push:
     branches:
-      - "main"
-
+      - main
+    paths-ignore:
+      - '**.md'
 env:
   DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
 
