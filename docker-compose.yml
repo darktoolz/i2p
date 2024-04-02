@@ -1,0 +1,12 @@
+services:
+  i2p:
+    image: darktool/i2p
+    read_only: true
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+    restart: always
+    tmpfs:
+      - /root/.i2pd:size=128M,uid=100,gid=65534,mode=1700
