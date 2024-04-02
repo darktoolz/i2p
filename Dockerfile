@@ -38,5 +38,5 @@ COPY --from=build / /
 
 EXPOSE 7070 4444 4447
 HEALTHCHECK --start-period=30s --start-interval=3s --retries=10 --timeout=1s --interval=30s \
-  CMD test $(curl -s localhost:7070 | grep success | grep -oE '[0-9]+' || echo -n 0) -gt 10
+  CMD test $(curl --noproxy "localhost" -s localhost:7070 | grep success | grep -oE '[0-9]+' || echo -n 0) -gt 10
 ENTRYPOINT ["/docker-entrypoint.sh"]
