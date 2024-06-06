@@ -1,6 +1,9 @@
 #!/bin/bash
 LENGTH=${LENGTH:-3}
 CONNECTIONS=${CONNECTIONS:-12}
+if test "x$LOGLEVEL" = "xerr"; then
+  LOGLEVEL=error
+fi
 LOGLEVEL=${LOGLEVEL:-error}
 SHARE=${SHARE:-25}
 BANDWIDTH=${BANDWIDTH:-X}
