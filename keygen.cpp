@@ -159,7 +159,7 @@ struct options* redirect_cin(struct options* opt) {
 
 int keygen(struct options* opt) {
   if (!opt) return -1;
-  i2p::crypto::InitCrypto (false, true, true, false);
+  i2p::crypto::InitCrypto (false, true, false);
 	if (opt->ttype.size()) opt->itype = SigType(opt->ttype);
 	i2p::data::SigningKeyType type = i2p::data::SigningKeyType(opt->itype);
 	if (SigTypeToName(type).find("unknown") != std::string::npos) { if (opt->verbose) std::cerr << "Incorrect signature type: " << type << std::endl; return -2; }
