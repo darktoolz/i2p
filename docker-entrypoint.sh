@@ -101,7 +101,6 @@ $dkeys
 do_default() {
 	mkdir -p "$I2P" "$TUN"
 	[ -n "$HIDDEN_I2P" ] && [ -n "$TUN" ] && rm -rf $TUN/*
-#	echo HIDDEN_I2P=$HIDDEN_I2P
 	for i in $HIDDEN_I2P; do
 		[ -z "$i" ] && continue
 		IFS=: read -r TYPE HOST PORT KEY <<< "$i"
@@ -120,6 +119,7 @@ keys = $NAME.dat" > "$TUN/$NAME.conf"
 		keyinfo "$I2P/$NAME.dat" | tr -d "\n" && echo ":$PORT"
 	done
 	do_client_tunnels
+  test -d /root/.i2pd/certificates || cp -r /usr/share/i2pd/certificates /root/.i2pd/certificates
 	exec i2pd --loglevel=$LOGLEVEL --http.address=0.0.0.0 --httpproxy.address=0.0.0.0 --socksproxy.address=0.0.0.0 --share=$SHARE --bandwidth=$BANDWIDTH \
 		--httpproxy.inbound.length=$LENGTH --httpproxy.outbound.length=$LENGTH --socksproxy.inbound.length=$LENGTH --socksproxy.outbound.length=$LENGTH \
 		--httpproxy.inbound.quantity=$CONNECTIONS --httpproxy.outbound.quantity=$CONNECTIONS --socksproxy.inbound.quantity=$CONNECTIONS --socksproxy.outbound.quantity=$CONNECTIONS

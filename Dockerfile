@@ -30,7 +30,6 @@ COPY --from=builder /usr/bin/keygen /usr/bin/
 COPY --from=builder /usr/bin/keyinfo /usr/bin/
 COPY --chmod=777 docker-entrypoint.sh /
 COPY test.mk /
-RUN ln -s /root/.i2pd/certificates /usr/share/i2pd/certificates
 
 FROM scratch
 ARG SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-0}
