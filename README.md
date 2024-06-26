@@ -55,3 +55,12 @@ These tools are available in docker
 - `GOSTR3410_TC26_A_512-GOSTR3411-512`: 10
 - `RED25519-SHA512`: 11
 - default: `ED25519-SHA512`
+
+## troubleshooting
+To read logs: `docker compose -p darknet logs i2p`
+- `Transports: Backward clock jump detected, got -358932 instead of 300000`: system clock required to sync
+
+```bash
+apt update && apt install ntpdate && ntpdate pool.ntp.org
+```
+It is recommended to run `ntpdate` by cron regular task
