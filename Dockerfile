@@ -17,6 +17,7 @@ WORKDIR /root/i2p_keytool
 RUN \
 	--mount=type=bind,source=Base.patch,target=Base.patch \
 	--mount=type=bind,source=keygen.cpp,target=keygen.cpp \
+	--mount=type=bind,source=sigtype.h,target=sigtype.h \
 		patch -p0 < Base.patch && \
 		tail -n +2 keygen.cpp > keyinfo.cpp && \
   	make keygen keyinfo && \

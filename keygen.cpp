@@ -15,79 +15,55 @@
 #include "I2PEndian.h"
 #include "LeaseSet.h"
 
+#include "sigtype.h"
+
 #define BUFFER_LEN 8192
 
 i2p::data::SigningKeyType default_type = i2p::data::SIGNING_KEY_TYPE_EDDSA_SHA512_ED25519;
 
 #ifdef NOTHING
-// this code is kept here in case of future changes in i2pd Base64 functions
-// Base64 encoding has non-standard table in i2pd
-/*
---- 
-+++ i2pd/libi2pd/Base.cpp 1970-00-01 00:00:00.000000000 +0000
-@@ -47,7 +47,7 @@
-    'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-    'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-    'w', 'x', 'y', 'z', '0', '1', '2', '3',
--   '4', '5', '6', '7', '8', '9', '-', '~'
-+   '4', '5', '6', '7', '8', '9', '+', '/'
-  };
-
-  const char * GetBase64SubstitutionTable ()
-*/
-// from i2p::data::ToBase64Standard
-std::string ToBase64Standard(const std::string& in) {
-	auto l = in.length();
-	char * str = new char[l + 1];
-	str[l]=0;
-	const char * instr = in.c_str();
-	for (size_t i = 0; i < l; i++) {
-		if (instr[i] == '-') { str[i] = '+'; }
-		else if (instr[i] == '~') { str[i] = '/'; }
-		else { str[i] = instr[i]; }}
-	std::string s(str);
-	delete[] str;
-	return s;
-}
 #else
-//std::string ToBase64Standard(const std::string& in) { return in; }
 #define ToBase64Standard(x) x
 #endif
 
 std::string achar("a");
 std::string bchar("b");
+std::string cchar("c");
 std::string dev_stdout("/dev/stdout");
 std::string dev_stdin("/dev/stdin");
 std::string minus("-");
 
 struct options {
-	bool domain;
-	bool type;
-	bool priv;
+  bool domain;
+  bool type;
+  bool priv;
 
-	bool verbose;
-	bool base64;
+  bool verbose;
+  bool base64;
   bool mask;
-	int itype;
-	int found;
-	std::string path;
-	std::string ttype;
+  int itype;
+  int found;
+  std::string path;
+  std::string ttype;
+  std::string proc;
 };
 struct options opt = {
-	false,
-	false,
-	false,
-	false,
-	false,
   false,
-	int(default_type),
-	0,
-	"",
-	""
+  false,
+  false,
+  false,
+  false,
+  false,
+  int(default_type),
+  0,
+  "",
+  "",
+  ""
 };
 uint16_t SigType(const std::string & keyname) {
 	if (keyname == achar) return i2p::data::SIGNING_KEY_TYPE_GOSTR3410_TC26_A_512_GOSTR3411_512;
 	if (keyname == bchar) return i2p::data::SIGNING_KEY_TYPE_REDDSA_SHA512_ED25519;
+	if (keyname == cchar) return i2p::data::SIGNING_KEY_TYPE_MLDSA44;
 	if(keyname.find("RED25519") != std::string::npos) return i2p::data::SIGNING_KEY_TYPE_REDDSA_SHA512_ED25519;
 	return NameToSigType(keyname);
 }
@@ -106,19 +82,21 @@ static int printHelp(const char * exe, int exitcode) {
 	std::cout << "  [keytype]: default: ED25519-SHA512" << std::endl;
 	std::cout << "  -x: base64" << std::endl;
 	std::cout << "  -m: use mask: create keys till find one starting from mask (out to stdout)" << std::endl;
-	std::cout << "  -X: key id: X == [0, 1, 2, 3, 4, 5, 6, 7, 9, a, b]" << std::endl;
+	std::cout << "  -X: key id: X == [0, 1, 2, 3, 7, 9, a, b, c]" << std::endl;
 	std::cout << "    id: type" << std::endl;
 	std::cout << "    -0: DSA-SHA1" << std::endl;
 	std::cout << "    -1: ECDSA-P256 (aka ECDSA-SHA256-P256)" << std::endl;
 	std::cout << "    -2: ECDSA-P384 (aka ECDSA-SHA384-P384)" << std::endl;
 	std::cout << "    -3: ECDSA-P521 (aka ECDSA-SHA512-P521)" << std::endl;
-	std::cout << "    -4: RSA-2048-SHA256 (aka RSA-SHA256-2048)" << std::endl;
-	std::cout << "    -5: RSA-3072-SHA384 (aka RSA-SHA384-3072)" << std::endl;
-	std::cout << "    -6: RSA-4096-SHA512 (aka RSA-SHA512-4096)" << std::endl;
+//	std::cout << "    -4: RSA-2048-SHA256 (aka RSA-SHA256-2048)" << std::endl;
+//	std::cout << "    -5: RSA-3072-SHA384 (aka RSA-SHA384-3072)" << std::endl;
+//	std::cout << "    -6: RSA-4096-SHA512 (aka RSA-SHA512-4096)" << std::endl;
 	std::cout << "    -7: ED25519-SHA512 (aka EDDSA-SHA512-ED25519) (default)" << std::endl;
+//	std::cout << "    -8: ED25519ph-SHA512 (aka EDDSA-SHA512-ED25519ph)" << std::endl;
 	std::cout << "    -9: GOSTR3410-A-GOSTR3411-256 (aka GOSTR3410_CRYPTO_PRO_A-GOSTR3411-256)" << std::endl;
 	std::cout << "    -a: GOSTR3410-TC26-A-GOSTR3411-512 (aka GOSTR3410_TC26_A_512-GOSTR3411-512)" << std::endl;
-	std::cout << "    -b: RED25519-SHA512" << std::endl;
+	std::cout << "    -b: RED25519-SHA512 (aka REDDSA-SHA512-ED25519)" << std::endl;
+	std::cout << "    -c: MLDSA44" << std::endl;
 #else
   std::cout << "usage: " << exe << " [-h] [-v] [-d] [-t] [-p] [keyin]" << std::endl;
 	std::cout << "  [keyin]:  key input path (\"-\" or \"/dev/stdin\" accepted), default: empty (equal to \"-\")" << std::endl;
@@ -128,6 +106,7 @@ static int printHelp(const char * exe, int exitcode) {
 #endif
   std::cout << "  -h: help" << std::endl;
   std::cout << "  -v: verbose" << std::endl;
+  std::cout << "  -q: quiet (non-verbose)" << std::endl;
 
   return exitcode;
 }
@@ -158,17 +137,18 @@ struct options* redirect_cin(struct options* opt) {
 }
 
 int keygen(struct options* opt) {
-  if (!opt) return -1;
+  if (!opt) { std::cerr << "keygen: options undefined" << std::endl; return -1;}
   i2p::crypto::InitCrypto (false);
 	if (opt->ttype.size()) opt->itype = SigType(opt->ttype);
 	i2p::data::SigningKeyType type = i2p::data::SigningKeyType(opt->itype);
 	if (SigTypeToName(type).find("unknown") != std::string::npos) { if (opt->verbose) std::cerr << "Incorrect signature type: " << type << std::endl; return -2; }
   auto keys = i2p::data::PrivateKeys::CreateRandomKeys(type);
+
   int counter = 0;
   if (opt->mask && opt->path != "") {
     if (opt->verbose) std::cerr << "Generating key using mask: '" << opt->path << std::endl;
     while (ToBase64Standard(keys.ToBase64()).find(opt->path.c_str()) != 0) {
-      if (opt->verbose && counter % 2048 == 0) { std::cout << "Checked " << counter << " keys" << std::endl; }
+      if (opt->verbose && counter % 2048 == 0) { std::cerr << "Checked " << counter << " keys" << std::endl; }
       keys = i2p::data::PrivateKeys::CreateRandomKeys (type);
       counter++;
     }
@@ -176,8 +156,9 @@ int keygen(struct options* opt) {
   if (opt->base64) {
 		std::cout << ToBase64Standard(keys.ToBase64()) << std::endl;
   } else {
-		size_t len = BUFFER_LEN;
-    uint8_t * buf = new uint8_t[len];
+    size_t len = keys.GetFullLen ();
+    uint8_t * buf = new uint8_t[len+1];
+    buf[len]=0;
     len = keys.ToBuffer (buf, len);
     std::cout.write((char *)buf, len);
     delete[] buf;
@@ -196,15 +177,17 @@ int keyinfo(struct options* opt) {
 
   size_t len = BUFFER_LEN;
   uint8_t * buf = new uint8_t[len];
+  for (int i=0;i<len;i++) buf[i]=0;
+  buf[len]=0;
   std::cin.read((char*)buf, len);
 
   if (!keys.FromBuffer(buf, len)) {
-    if (opt->verbose) std::cerr << "bad key file format" << std::endl;
+    if (opt->verbose) std::cout << "bad key file format" << std::endl;
     return 3;
   }
 	auto dest = keys.GetPublic();
   if(!dest) {
-    if (opt->verbose) std::cerr << "failed to extract public key" << std::endl;
+    if (opt->verbose) std::cout << "failed to extract public key" << std::endl;
     return 3;
   }
 
@@ -227,10 +210,11 @@ int keyinfo(struct options* opt) {
 
 int main (int argc, char * argv[]) {
 	int option = 0;
+  opt.proc = argv[0];
 #ifdef KEYGEN
-  while((option = getopt(argc, argv, "hvabxm0123456789")) != -1) {
+  while((option = getopt(argc, argv, "qhvabcxm0123789")) != -1) {
 #else
-  while((option = getopt(argc, argv, "hvptd")) != -1) {
+  while((option = getopt(argc, argv, "qhvptd")) != -1) {
 #endif
 		opt.found++;
     switch(option){
@@ -238,6 +222,9 @@ int main (int argc, char * argv[]) {
       return printHelp(argv[0], 0);
     case 'v':
       opt.verbose = true;
+      break;
+    case 'q':
+      opt.verbose = false;
       break;
 #ifndef KEYGEN
     case 'p':
@@ -259,14 +246,17 @@ int main (int argc, char * argv[]) {
     case 'x':
       opt.base64 = true;
       break;
-    case 'b':
-			opt.itype = 11;
-      break;
 		case 'a':
 			opt.itype = 10;
 			break;
+    case 'b':
+			opt.itype = 11;
+      break;
+		case 'c':
+			opt.itype = 12;
+			break;
     default:
-			if ('0'<=option and option<='9') { opt.itype = option-'0'; }
+			if (('0'<=option and option<='3') || ('7'<=option and option<='9')) { opt.itype = option-'0'; }
 			else { return printHelp(argv[0], -1); }
 			break;
 #endif
@@ -275,6 +265,21 @@ int main (int argc, char * argv[]) {
 	if (optind != argc) { opt.path = argv[optind++]; }
 	if (optind != argc) { opt.ttype = argv[optind++]; }
 	if (optind != argc) { return printHelp(argv[0], -1); }
+
+  if (opt.verbose) {
+    std::cout << "argc: "   << argc << std::endl;
+    std::cout << "proc: "   << opt.proc << std::endl;
+    std::cout << "domain: " << opt.domain << std::endl;
+    std::cout << "type: "   << opt.type << std::endl;
+    std::cout << "priv: "   << opt.priv << std::endl;
+    std::cout << "verbose: "<< opt.verbose << std::endl;
+    std::cout << "base64: " << opt.base64 << std::endl;
+    std::cout << "mask: "   << opt.mask << std::endl;
+    std::cout << "itype: "  << opt.itype << std::endl;
+    std::cout << "found: "  << opt.found << std::endl;
+    std::cout << "path: "   << opt.path << std::endl;
+    std::cout << "ttype: "  << opt.ttype << std::endl;
+  }
 
 #ifdef KEYGEN
 	return keygen(redirect_cout(&opt));
